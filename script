@@ -1,0 +1,25 @@
+node
+{
+def mavenHome=tool name: "maven3.8.6", type: "maven"
+stage('to get code from scm')
+{
+ git branch: 'pavan', credentialsId: '83f36396-b61e-4965-84cf-d3588d2d8d81', url: 'https://github.com/PavanGangadharappa/integration.git'   
+}
+stage('maven_building_stage')
+{
+sh "${mavenHome}/bin/mvn clean package" 
+}
+stage('sonarqube_report')
+{
+    sh "${mavenHome}/bin/mvn sonar:sonar"
+}
+stage('uploadArtifact_to_nexus_repository')
+{
+    sh "${mavenHome}/bin/mvn deploy"
+}
+stage('tom_cat_deploy')
+{
+    sshagent(['cfbe111f-50a4-42a1-b3da-98250b0d75fb'])
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@:/opt/apache-tomcat-9.0.65/webapps"
+}
+}
